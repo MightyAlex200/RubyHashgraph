@@ -9,13 +9,17 @@ class Hashgraph
         @coin_round_frequency = 10
     end
 
+    def supermajority
+        (2*population)/3.0
+    end
+
     def add_event!(event)
         @events = @events.push(event).uniq
         @population = @events.map { |e| e.creator }.uniq.length
     end
 
     def many_creators(s)
-        s.map { |x| x.creator }.uniq.length > (2*population)/3.0
+        s.map { |x| x.creator }.uniq.length > supermajority
     end
 
     def rounds_decided(r)
@@ -122,7 +126,7 @@ class Event
     end
 
     def decide(y)
-        supermajority = (2*hashgraph.population)/3.0
+        supermajority = hashgraph.supermajority
         (self_parent ? self_parent.decide(y) : false) or (
             witness and
             y.witness and
@@ -133,7 +137,7 @@ class Event
     end
 
     def copy_vote(y)
-        not witness or self_parent ? self_parent.decide(y) : false
+        (not witness) or (self_parent ? self_parent.decide(y) : false)
     end
 
     def vote(y)

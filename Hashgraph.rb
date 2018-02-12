@@ -81,7 +81,6 @@ class Event
     end
 
     def strongly_see(y)
-        self == y or
         (see y and hashgraph.many_creators hashgraph.events.select { |z| see z and z.see y })
     end
 
@@ -118,7 +117,8 @@ class Event
     def fract_true(y)
         vt = votes y, true
         vf = votes y, false
-        vt.fdiv(vt + vf)
+        r = vt.fdiv(vt + vf)
+        if r.nan? then 0 else r end
     end
 
     def decide(y)
@@ -137,17 +137,18 @@ class Event
     end
 
     def vote(y)
+        ft = fract_true(y)
         if copy_vote y
-            vote self_parent, y
-        elsif diff(y) % hashgraph.coin_round_frequency == 0 and fract_true(y).between((1/3.0), (2/3.0))
+            self_parent.vote y
+        elsif diff(y) % hashgraph.coin_round_frequency == 0 and ft.between?((1/3.0), (2/3.0))
             true # MAKE THIS A COIN ROUND
         else
-            fract_true(y) > 0.5
+            ft > 0.5
         end
     end
 
     def famous
-        hashgraph.events.any? { |y| y.decide self and y.vote self }
+        hashgraph.events.any? { |y| y.decide(self) and y.vote(self) }
     end
 
     def unique_famous
